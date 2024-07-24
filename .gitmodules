@@ -1,3 +1,0 @@
-[submodule "common/efi"]
-	path = common/efi
-	url = https://github.com/aurixos/efi

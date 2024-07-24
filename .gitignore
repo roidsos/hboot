@@ -1,9 +1,13 @@
-*.o
-*.efi
-*.img
-*.fd
+*elf
+*o
+*vscode
+*efi
+*bin
+*test
+.config
+.config.old
 
-/bin/
-/common/efi/
-/.vscode/
-/mnt/
+config.h
+kconfiglib/*
+bin/*
+lib/*
