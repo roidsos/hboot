@@ -34,12 +34,12 @@ guiconfig: $(KCONFIGLIB_DIR)
 	@$(MAKE) $(KERNEL_CONFIG_PATH)
 
 TARGET_CHECK:
-	@if [ ! -f src/arch/$(TARGET)/build.mk ]; then \
-		echo "Error: TARGET file src/arch/$(TARGET)/build.mk does not exist."; \
+	@if [ ! -f targets/$(TARGET).mk ]; then \
+		echo "Error: TARGET file targets/$(TARGET).mk does not exist."; \
 		exit 1; \
 	fi
 
-include src/arch/$(TARGET)/build.mk
+include targets/$(TARGET).mk
 
 .PHONY: cleandist
 cleandist:

@@ -9,7 +9,15 @@ CORE_SOURCES := $(shell find src/core/          -name '*.c')
 CORE_HEADERS := $(shell find src/core/          -name '*.h')
 OBJECTS := $(patsubst src/%,bin/%, $(patsubst %.c,%.c.o,$(ARCH_SOURCES) $(CORE_SOURCES)))
 
-CFLAGS := -ffreestanding -fshort-wchar -Wno-unused-command-line-argument -Wno-void-pointer-to-int-cast -Wno-int-to-void-pointer-cast -Wno-int-to-pointer-cast -Isrc -Ilib
+CFLAGS := -ffreestanding \
+ 	      -fshort-wchar \
+ 	      -Wno-unused-command-line- \
+ 	      -Wno-void-pointer-to-int-cast \
+ 	      -Wno-int-to-void-pointer-cast \
+ 	      -Wno-int-to-pointer-cast \
+		  -Isrc \
+		  -Ilib \
+		  -DTARGET=$(TARGET)
 LDFLAGS := -nostdlib -Wl,-entry:boot_entry -Wl,-subsystem:efi_application -fuse-ld=lld-link
 
 CLANG_TARGET = x86_64-unknown-windows
