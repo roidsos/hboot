@@ -3,6 +3,18 @@
 #include <core/libc/file.h>
 #include <core/libc/malloc.h>
 
+char* kernel_path = NULL;
+char* kernel_cmdline = NULL;
+char* ramfs_path = NULL;
+
+void fix_path(char* path) {
+    for(int i = 0; i < strlen(path); i++) {
+        if (path[i] == '/') {
+            path[i] = '\\';
+        }
+    }
+}
+
 void cfg_get_key(const char* buffer, const char* key, char** value) {
     if (buffer == NULL || key == NULL || value == NULL) {
         return;
@@ -22,7 +34,7 @@ void cfg_get_key(const char* buffer, const char* key, char** value) {
     key_start++;
 
     const char* value_end = key_start;
-    while (*value_end != '\0' && *value_end != '\n' && *value_end != '\r') {
+    while (*value_end != '\n' && *value_end != '\r' && *value_end != 0x00) {
         value_end++;
     }
 
@@ -42,29 +54,41 @@ HB_STATUS load_config() {
     //TODO: make config path congigurable
     HB_FILE* file = file_open(L"\\boot\\hboot.conf", EFI_FILE_MODE_READ);
     if (file == NULL) {
-        return HB_FAIL;
+        goto error;
     }
+
     int size = file_size(file);
     char *buffer = (char*)malloc(size);
     if(file_read(file, buffer, size) != HB_SUCESS) {
-        return HB_FAIL;
+        goto error;
     }
 
-    char* value = NULL;
-    cfg_get_key(buffer, "kernel", &value);
-    if (value == NULL) {
-        return HB_FAIL;
-    }
-    CHAR16 wide[1024];
-    mbstowcs(wide, value, 1024);
-    ST->ConOut->OutputString(ST->ConOut, L"Kernel: ");
-    ST->ConOut->OutputString(ST->ConOut, wide);
-    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
-    free(value);
+    buffer[size] = '\0';
 
+    cfg_get_key(buffer, "kernel", &kernel_path);
+    if (kernel_path == NULL) {
+        goto error;
+    }
+    fix_path(kernel_path);
+
+    cfg_get_key(buffer, "kernel_cmdline", &kernel_cmdline);
+    if (kernel_cmdline == NULL) {
+        goto error;
+    }
+    cfg_get_key(buffer, "ramfs", &ramfs_path);
+    if (ramfs_path != NULL) {
+        fix_path(ramfs_path);
+        // no problem if the ramfs is not found
+    }
+
+    free(buffer);
     file_close(file);
-
     return HB_SUCESS;
+
+    error:
+    free(buffer);
+    file_close(file);
+    return HB_FAIL;
 }
 
 
@@ -73,6 +97,14 @@ void shared_main()
     if(load_config() != HB_SUCESS) {
         ST->ConOut->OutputString(ST->ConOut, L"Failed to load config!\r\n");
     }
+    CHAR16 wide[1024];
 
-    while(1);
+    //TODO: load kernel
+
+    if(ramfs_path != NULL) {
+        //TODO: load ramfs
+    }
+
+    //unreachable
+    ST->ConOut->OutputString(ST->ConOut, L"Error: kernel exited )=\r\n");
 }
