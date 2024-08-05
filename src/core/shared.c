@@ -95,11 +95,29 @@ HB_STATUS load_config() {
 void shared_main()
 {
     if(load_config() != HB_SUCESS) {
-        ST->ConOut->OutputString(ST->ConOut, L"Failed to load config!\r\n");
+        goto gigafuxk;
     }
-    CHAR16 wide[1024];
 
-    //TODO: load kernel
+    
+    HB_FILE *kernel = file_open(kernel_path, EFI_FILE_MODE_READ);
+    void* kernelbuf = malloc(file_size(kernel));
+
+    if(kernel == NULL) {
+        goto fuxk;
+    }
+    if(file_read(kernel, kernelbuf, file_size(kernel)) != HB_SUCESS) {
+        goto fuxk;
+    }
+    file_close(kernel);
+
+    //TODO: parse ELF
+    //TODO: make memory map
+
+    //EFI_STATUS status = ST->BootServices->ExitBootServices(IH, map_key);
+    //while(status != EFI_SUCCESS) {
+    //    ST->BootServices->ExitBootServices(IH, map_key);
+    //}
+
 
     if(ramfs_path != NULL) {
         //TODO: load ramfs
@@ -107,4 +125,13 @@ void shared_main()
 
     //unreachable
     ST->ConOut->OutputString(ST->ConOut, L"Error: kernel exited )=\r\n");
+    return;
+
+    fuxk:
+    ST->ConOut->OutputString(ST->ConOut, L"Failed to load kernel!\r\n");
+    return;
+
+    gigafuxk:
+    ST->ConOut->OutputString(ST->ConOut, L"Failed to load/parse config!\r\n");
+    return;
 }
