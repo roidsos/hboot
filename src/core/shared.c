@@ -1,5 +1,8 @@
+#include "krnlldr.h"
 #include "libc/string.h"
 #include <core/core.h>
+#include <core/krnlldr.h>
+#include <core/protocol.h>
 #include <core/libc/file.h>
 #include <core/libc/malloc.h>
 
@@ -91,33 +94,47 @@ HB_STATUS load_config() {
     return HB_FAIL;
 }
 
-
 void shared_main()
 {
     if(load_config() != HB_SUCESS) {
         goto gigafuxk;
     }
 
-    
-    HB_FILE *kernel = file_open(kernel_path, EFI_FILE_MODE_READ);
-    void* kernelbuf = malloc(file_size(kernel));
+    CHAR16 wide[1024];
 
+    mbstowcs(wide, kernel_path, 1024);
+
+    ST->ConOut->OutputString(ST->ConOut, L"Kernel path:\r\n");
+    ST->ConOut->OutputString(ST->ConOut, wide);
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
+
+    HB_FILE *kernel = file_open(kernel_path, EFI_FILE_MODE_READ);
     if(kernel == NULL) {
         goto fuxk;
     }
-    if(file_read(kernel, kernelbuf, file_size(kernel)) != HB_SUCESS) {
+    EFI_UINTN size = file_size(kernel);
+    ST->ConOut->OutputString(ST->ConOut, L"Booting kernel...\r\n");
+    void* kernelbuf = malloc(size);
+    if(file_read(kernel, kernelbuf, size) != HB_SUCESS) {
         goto fuxk;
     }
     file_close(kernel);
 
-    //TODO: parse ELF
-    //TODO: make memory map
+    if(!validate_elf(kernelbuf, size)){
+        goto fuxk;
+    }
+
+    EFI_MEMORY_DESCRIPTOR* map = NULL;
+    EFI_UINTN   map_size,map_key,map_desc_size,map_desc_version = 0;
+
+    ST->BootServices->GetMemoryMap(&map_size, map, &map_key, &map_desc_size, &map_desc_version);
+    ST->BootServices->AllocatePool(EfiLoaderData, map_size, &map); 
+    ST->BootServices->GetMemoryMap(&map_size, map, &map_key, &map_desc_size, &map_desc_version);
 
     //EFI_STATUS status = ST->BootServices->ExitBootServices(IH, map_key);
-    //while(status != EFI_SUCCESS) {
+    //while(status == EFI_SUCCESS) {
     //    ST->BootServices->ExitBootServices(IH, map_key);
     //}
-
 
     if(ramfs_path != NULL) {
         //TODO: load ramfs
@@ -128,7 +145,7 @@ void shared_main()
     return;
 
     fuxk:
-    ST->ConOut->OutputString(ST->ConOut, L"Failed to load kernel!\r\n");
+    ST->ConOut->OutputString(ST->ConOut, L"Failed to load/parse kernel!\r\n");
     return;
 
     gigafuxk:
