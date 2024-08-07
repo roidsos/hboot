@@ -172,7 +172,7 @@ typedef struct
     uint16_t e_shentsize;
     uint16_t e_shnum;
     uint16_t e_shstrndx;
-} Elf32_Ehdr;
+} __attribute__((packed)) Elf32_Ehdr;
 
 typedef struct
 {
@@ -190,7 +190,7 @@ typedef struct
     uint16_t e_shentsize;
     uint16_t e_shnum;
     uint16_t e_shstrndx;
-} Elf64_Ehdr;
+} __attribute__((packed)) Elf64_Ehdr;
 
 typedef struct
 {
@@ -202,7 +202,7 @@ typedef struct
     uint32_t p_filesz;
     uint32_t p_memsz;
     uint32_t p_align;
-} Elf32_Phdr;
+}  __attribute__((packed)) Elf32_Phdr;
 
 typedef struct
 {
@@ -214,7 +214,7 @@ typedef struct
     uint64_t p_filesz;
     uint64_t p_memsz;
     uint64_t p_align;
-} Elf64_Phdr;
+} __attribute__((packed)) Elf64_Phdr;
 
 typedef struct
 {
@@ -228,7 +228,7 @@ typedef struct
     uint32_t sh_info;
     uint32_t sh_addralign;
     uint32_t sh_entsize;
-} Elf32_Shdr;
+} __attribute__((packed)) Elf32_Shdr;
 
 typedef struct
 {
@@ -242,7 +242,7 @@ typedef struct
     uint32_t sh_info;
     uint64_t sh_addralign;
     uint64_t sh_entsize;
-} Elf64_Shdr;
+} __attribute__((packed)) Elf64_Shdr;
 
 typedef struct
 {
@@ -252,7 +252,7 @@ typedef struct
     uint8_t st_info;
     uint8_t st_other;
     uint16_t st_shndx;
-} Elf32_Sym;
+} __attribute__((packed)) Elf32_Sym;
 
 typedef struct
 {
@@ -262,33 +262,33 @@ typedef struct
     uint16_t st_shndx;
     uint64_t st_value;
     uint64_t st_size;
-} Elf64_Sym;
+} __attribute__((packed)) Elf64_Sym;
 
 typedef struct
 {
     uint32_t r_offset;
     uint32_t r_info;
-} Elf32_Rel;
+} __attribute__((packed)) Elf32_Rel;
 
 typedef struct
 {
     uint64_t r_offset;
     uint64_t r_info;
-} Elf64_Rel;
+} __attribute__((packed)) Elf64_Rel;
 
 typedef struct
 {
     uint32_t r_offset;
     uint32_t r_info;
     int32_t r_addend;
-} Elf32_Rela;
+} __attribute__((packed)) Elf32_Rela;
 
 typedef struct
 {
     uint64_t r_offset;
     uint64_t r_info;
     int64_t r_addend;
-} Elf64_Rela;
+} __attribute__((packed)) Elf64_Rela;
 
 typedef struct
 {
@@ -298,7 +298,7 @@ typedef struct
         uint32_t d_val;
         uint32_t d_ptr;
     } d_un;
-} Elf32_Dyn;
+} __attribute__((packed)) Elf32_Dyn;
 
 typedef struct
 {
@@ -308,6 +308,6 @@ typedef struct
         uint64_t d_val;
         uint64_t d_ptr;
     } d_un;
-} Elf64_Dyn;
+} __attribute__((packed)) Elf64_Dyn;
 
 #endif // __ELF_H__

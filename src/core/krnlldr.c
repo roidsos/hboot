@@ -17,7 +17,7 @@ int validate_elf(void* elf, size_t size) {
         return 0;
     }
 
-    if(h->e_entry <= 0xfffffff800000000) {
+    if(h->e_entry < 0xfffffff800000000) {
         return 0;
     }
 

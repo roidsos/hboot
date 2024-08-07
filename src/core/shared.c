@@ -108,12 +108,11 @@ void shared_main()
     ST->ConOut->OutputString(ST->ConOut, wide);
     ST->ConOut->OutputString(ST->ConOut, L"\r\n");
 
-    HB_FILE *kernel = file_open(kernel_path, EFI_FILE_MODE_READ);
+    HB_FILE *kernel = file_open(wide, EFI_FILE_MODE_READ);
     if(kernel == NULL) {
         goto fuxk;
     }
     EFI_UINTN size = file_size(kernel);
-    ST->ConOut->OutputString(ST->ConOut, L"Booting kernel...\r\n");
     void* kernelbuf = malloc(size);
     if(file_read(kernel, kernelbuf, size) != HB_SUCESS) {
         goto fuxk;
@@ -123,6 +122,7 @@ void shared_main()
     if(!validate_elf(kernelbuf, size)){
         goto fuxk;
     }
+    ST->ConOut->OutputString(ST->ConOut, L"Finally the goddamn thing read the file\r\n");
 
     EFI_MEMORY_DESCRIPTOR* map = NULL;
     EFI_UINTN   map_size,map_key,map_desc_size,map_desc_version = 0;
@@ -131,10 +131,9 @@ void shared_main()
     ST->BootServices->AllocatePool(EfiLoaderData, map_size, &map); 
     ST->BootServices->GetMemoryMap(&map_size, map, &map_key, &map_desc_size, &map_desc_version);
 
-    //EFI_STATUS status = ST->BootServices->ExitBootServices(IH, map_key);
-    //while(status == EFI_SUCCESS) {
-    //    ST->BootServices->ExitBootServices(IH, map_key);
-    //}
+    for(int i = 0; i < 4; i++) {
+        ST->BootServices->ExitBootServices(IH, map_key);
+    }
 
     if(ramfs_path != NULL) {
         //TODO: load ramfs

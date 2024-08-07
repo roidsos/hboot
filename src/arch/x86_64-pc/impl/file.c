@@ -1,4 +1,4 @@
-#include <core/file.h>
+#include <core/libc/file.h>
 
 EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *sfs;
 
