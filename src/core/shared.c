@@ -96,6 +96,8 @@ HB_STATUS load_config() {
 
 void shared_main()
 {
+    EFI_STATUS s;
+
     if(load_config() != HB_SUCESS) {
         goto gigafuxk;
     }
@@ -125,26 +127,113 @@ void shared_main()
     ST->ConOut->OutputString(ST->ConOut, L"Finally the goddamn thing read the file\r\n");
 
     EFI_MEMORY_DESCRIPTOR* map = NULL;
-    EFI_UINTN   map_size,map_key,map_desc_size,map_desc_version = 0;
+    EFI_MEMORY_DESCRIPTOR tmpmap[1];
+    EFI_UINTN   map_size = sizeof(tmpmap);
+    EFI_UINTN   map_key = 0;
+    EFI_UINTN   map_desc_size = 0;
+    EFI_UINT32  map_desc_version = 0;
 
-    ST->BootServices->GetMemoryMap(&map_size, map, &map_key, &map_desc_size, &map_desc_version);
-    ST->BootServices->AllocatePool(EfiLoaderData, map_size, &map); 
-    ST->BootServices->GetMemoryMap(&map_size, map, &map_key, &map_desc_size, &map_desc_version);
+    ST->BootServices->GetMemoryMap(&map_size, tmpmap, &map_key, &map_desc_size, &map_desc_version);
 
-    for(int i = 0; i < 4; i++) {
-        ST->BootServices->ExitBootServices(IH, map_key);
+    map_size += 4096;
+
+    //s = ST->BootServices->FreePool(map); 
+    //if(s != EFI_SUCCESS) {
+    //    CHAR16 err[5];
+    //    err[0] = '0' + s;
+    //    err[1] = 'a';
+    //    err[2] = '\r';
+    //    err[3] = '\n';
+    //    err[4] = '\0';
+    //    ST->ConOut->OutputString(ST->ConOut, err);
+    //    goto fuxk2;
+    //}
+
+    s = ST->BootServices->AllocatePool(EfiLoaderData, map_size, (void**)&map); 
+    if(s != EFI_SUCCESS) {
+        CHAR16 err[5];
+        err[0] = '0' + s;
+        err[1] = 'b';
+        err[2] = '\r';
+        err[3] = '\n';
+        err[4] = '\0';
+        ST->ConOut->OutputString(ST->ConOut, err);
+        goto fuxk2;
     }
+
+    retry:
+    EFI_UINTN retries = 4;
+    s = ST->BootServices->GetMemoryMap(&map_size, map, &map_key, &map_desc_size, &map_desc_version);
+    if(s != EFI_SUCCESS) {
+        retries--;
+        if(retries == 0) 
+            goto fuxk2; 
+        CHAR16 err[5];
+        err[0] = '0' + s;
+        err[1] = 'c';
+        err[2] = '\r';
+        err[3] = '\n';
+        err[4] = '\0';
+        ST->ConOut->OutputString(ST->ConOut, err);
+        goto retry;
+    }
+
+    s = ST->BootServices->ExitBootServices(IH, map_key);
+    if(s != EFI_SUCCESS) {
+        retries--;
+        if(retries == 0)
+            goto fuxk2;
+        CHAR16 err[5];
+        err[0] = '0' + s;
+        err[1] = 'd';
+        err[2] = '\r';
+        err[3] = '\n';
+        err[4] = '\0';
+        ST->ConOut->OutputString(ST->ConOut, err);
+        goto retry;
+    }
+
 
     if(ramfs_path != NULL) {
         //TODO: load ramfs
     }
 
-    //unreachable
-    ST->ConOut->OutputString(ST->ConOut, L"Error: kernel exited )=\r\n");
+    //HACK: port e9
+    asm volatile("outb %%al, %1" : : "a" ('E'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('r'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('r'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('o'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('r'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" (':'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" (' '), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('T'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('h'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('e'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" (' '), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('k'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('e'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('r'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('n'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('e'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('l'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" (' '), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('e'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('x'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('i'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('t'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('e'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('d'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('!'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('\r'), "Nd" (0xe9) : "memory");
+    asm volatile("outb %%al, %1" : : "a" ('\n'), "Nd" (0xe9) : "memory");
     return;
 
     fuxk:
     ST->ConOut->OutputString(ST->ConOut, L"Failed to load/parse kernel!\r\n");
+    return;
+
+    fuxk2:
+    ST->ConOut->OutputString(ST->ConOut, L"Failed to exit boot services!\r\n");
     return;
 
     gigafuxk:
