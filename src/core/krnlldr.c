@@ -1,7 +1,7 @@
 #include "krnlldr.h"
 #include "elf.h"
 
-int validate_elf(void* elf, size_t size) { 
+int validate_elf(void* elf) { 
     Elf64_Ehdr* h = (Elf64_Ehdr*)elf;
 
     if(h->e_ident[0] != 0x7f || h->e_ident[1] != 'E' || h->e_ident[2] != 'L' || h->e_ident[3] != 'F') {
@@ -28,13 +28,7 @@ int validate_elf(void* elf, size_t size) {
     return 1;
 }
 
-uintptr_t get_entry_point(void* elf, size_t size, void* entry) {
-    Elf64_Ehdr *h = (Elf64_Ehdr*)elf;
-
-    return h->e_entry;
-}
-
-Elf64_Phdr* get_phdrs(void* elf, size_t size) {
+Elf64_Phdr* get_phdrs(void* elf) {
     Elf64_Ehdr *h = (Elf64_Ehdr*)elf;
     return (Elf64_Phdr*)((uintptr_t)elf + h->e_phoff);
 }

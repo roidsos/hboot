@@ -5,9 +5,8 @@
 #include <core/elf.h>
 #include <stddef.h>
 
-int validate_elf(void* elf, size_t size);
-uintptr_t get_entry_point(void* elf, size_t size, void* entry);
+int validate_elf(void* elf);
 
-Elf64_Phdr* get_phdrs(void* elf, size_t size);
+Elf64_Phdr* get_phdrs(void* elf);
 
 #endif // __KRNLLDR_H__

@@ -10,12 +10,12 @@ HB_STATUS file_init(){
 
     EFI_LOADED_IMAGE_PROTOCOL *li;
 
-    EFI_STATUS s = ST->BootServices->HandleProtocol(IH, &LI_GUID, &li);
+    EFI_STATUS s = ST->BootServices->HandleProtocol(IH, &LI_GUID, (void**)&li);
 
     if (EFI_ERROR(s))
         return HB_FAIL;
 
-    s = ST->BootServices->HandleProtocol(li->DeviceHandle, &SFS_GUID, &sfs);
+    s = ST->BootServices->HandleProtocol(li->DeviceHandle, &SFS_GUID, (void**)&sfs);
 
     if (EFI_ERROR(s))
         return HB_FAIL;
@@ -61,7 +61,7 @@ HB_STATUS file_write(HB_FILE* file, void *buf, size_t size)
     return HB_SUCESS;
 }
 
-HB_STATUS file_seek(HB_FILE* file, int offset, int whence)
+HB_STATUS file_seek(HB_FILE* file, int offset)
 {
     EFI_STATUS s = file->SetPosition(file, offset);
     if (s != EFI_SUCCESS)

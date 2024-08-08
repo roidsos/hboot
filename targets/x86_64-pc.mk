@@ -10,11 +10,22 @@ CORE_HEADERS := $(shell find src/core/          -name '*.h')
 OBJECTS := $(patsubst src/%,bin/%, $(patsubst %.c,%.c.o,$(ARCH_SOURCES) $(CORE_SOURCES)))
 
 CFLAGS := -ffreestanding \
- 	      -fshort-wchar \
- 	      -Wno-unused-command-line- \
- 	      -Wno-void-pointer-to-int-cast \
- 	      -Wno-int-to-void-pointer-cast \
- 	      -Wno-int-to-pointer-cast \
+		  -Wall \
+		  -Wextra \
+		  -Werror \
+		  -fno-stack-protector \
+		  -fno-stack-check \
+		  -fno-rtti \
+		  -fno-lto \
+		  -fno-PIE \
+		  -fno-pic \
+		  -mcmodel=kernel \
+		  -mno-80387 \
+		  -mno-mmx \
+		  -mno-3dnow \
+		  -mno-sse \
+		  -mno-sse2 \
+		  -mno-red-zone \
 		  -Isrc \
 		  -Ilib \
 		  -DTARGET=$(TARGET)

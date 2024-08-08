@@ -19,4 +19,6 @@ EFI_STATUS boot_entry(EFI_HANDLE _ih, EFI_SYSTEM_TABLE *_st)
     _st->ConOut->OutputString(_st->ConOut, L"Booting RoidsOS...\r\n");
 
     shared_main();
+
+    return EFI_SUCCESS;
 }

@@ -2,6 +2,7 @@
 #define __PROTOCOL_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 // Hornet boot protocol
 #define HB_PROTOCOL_VERSION 0x1
@@ -11,11 +12,11 @@ typedef struct {
     uint32_t magic;
     uint32_t version;
 
-    uint32_t memmap_count;
-    void* memmap;
+    size_t memmap_size;
+    uintptr_t memmap;
 
-    uint32_t ramfs_size;
-    void* ramfs;
+    size_t ramfs_size;
+    uintptr_t ramfs;
 
 } __attribute__((packed)) boot_info;
 
