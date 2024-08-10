@@ -7,8 +7,8 @@
 typedef uint8_t HB_STATUS;
 typedef size_t HB_SIZE;
 
-#define HB_SUCESS 1
-#define HB_FAIL 0
+#define HB_SUCCESS 0
+#define HB_FAIL 1
 
 #if TARGET == x86_64-pc
 #include "arch/x86_64-pc/uefi.h"
