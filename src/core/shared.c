@@ -238,7 +238,7 @@ void shared_main()
 
         if (phdr->p_type == PT_LOAD) {
             uint64_t pages = (phdr->p_memsz + 0xfff) / 0x1000;
-            ST->BootServices->AllocatePages(AllocateAddress, EfiLoaderCode, pages, (void*)&phdr->p_paddr)
+            ST->BootServices->AllocatePages(AllocateAddress, EfiLoaderCode, pages, (void*)&phdr->p_paddr);
 
             //HACK: vmm shit, not very portable
             for(size_t i = 0; i < (phdr->p_memsz + 0xFFF) / 0x1000; i++) {

@@ -1,3 +1,5 @@
+all: setup
+
 TARGET_CHECK:
 	@if [ ! -f targets/$(TARGET).mk ]; then \
 		echo "Error: TARGET file targets/$(TARGET).mk does not exist."; \
