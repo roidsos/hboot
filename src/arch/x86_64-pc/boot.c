@@ -20,5 +20,10 @@ EFI_STATUS boot_entry(EFI_HANDLE _ih, EFI_SYSTEM_TABLE *_st)
 
     shared_main();
 
+    for (;;)
+    {
+        asm("hlt");
+    }
+    
     return EFI_SUCCESS;
 }
