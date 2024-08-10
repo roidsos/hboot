@@ -25,7 +25,7 @@ HB_STATUS file_init(){
     if (EFI_ERROR(s))
         return HB_FAIL;
 
-    return HB_SUCESS;
+    return HB_SUCCESS;
 }
 
 HB_FILE* file_open(CHAR16 *path, int mode){
@@ -42,7 +42,7 @@ HB_STATUS file_close(HB_FILE* file)
     if (s != EFI_SUCCESS)
         return HB_FAIL;
     
-    return HB_SUCESS;
+    return HB_SUCCESS;
 }
 
 HB_STATUS file_read(HB_FILE* file, void *buf, size_t size)
@@ -50,7 +50,7 @@ HB_STATUS file_read(HB_FILE* file, void *buf, size_t size)
     EFI_STATUS s = file->Read(file, &size, buf);
     if (s != EFI_SUCCESS)
         return HB_FAIL;
-    return HB_SUCESS;
+    return HB_SUCCESS;
 }
 
 HB_STATUS file_write(HB_FILE* file, void *buf, size_t size)
@@ -58,7 +58,7 @@ HB_STATUS file_write(HB_FILE* file, void *buf, size_t size)
     EFI_STATUS s = file->Write(file, &size, buf);
     if (s != EFI_SUCCESS)
         return HB_FAIL;
-    return HB_SUCESS;
+    return HB_SUCCESS;
 }
 
 HB_STATUS file_seek(HB_FILE* file, int offset)
@@ -66,7 +66,7 @@ HB_STATUS file_seek(HB_FILE* file, int offset)
     EFI_STATUS s = file->SetPosition(file, offset);
     if (s != EFI_SUCCESS)
         return HB_FAIL;
-    return HB_SUCESS;
+    return HB_SUCCESS;
 }
 
 HB_SIZE file_size(HB_FILE* file)

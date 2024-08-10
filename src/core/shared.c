@@ -66,7 +66,7 @@ HB_STATUS load_config() {
 
     int size = file_size(file);
     char *buffer = (char*)malloc(size);
-    if(file_read(file, buffer, size) != HB_SUCESS) {
+    if(file_read(file, buffer, size) != HB_SUCCESS) {
         goto error;
     }
 
@@ -90,7 +90,7 @@ HB_STATUS load_config() {
 
     free(buffer);
     file_close(file);
-    return HB_SUCESS;
+    return HB_SUCCESS;
 
     error:
     free(buffer);
@@ -117,7 +117,7 @@ void shared_main()
 {
     EFI_STATUS s;
 
-    if(load_config() != HB_SUCESS) {
+    if(load_config() != HB_SUCCESS) {
         goto gigafuxk;
     }
 
@@ -135,7 +135,7 @@ void shared_main()
     }
     EFI_UINTN size = file_size(kernel);
     void* kernelbuf = malloc(size);
-    if(file_read(kernel, kernelbuf, size) != HB_SUCESS) {
+    if(file_read(kernel, kernelbuf, size) != HB_SUCCESS) {
         goto fuxk;
     }
     file_close(kernel);
