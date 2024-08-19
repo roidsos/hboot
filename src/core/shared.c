@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <efi/efi_types.h>
+#include "log.h"
 
 char* kernel_path = NULL;
 char* kernel_cmdline = NULL;
@@ -263,6 +264,7 @@ void shared_main()
     entry_t kernel_entry = (entry_t)h->e_entry;
     __asm__ volatile("mov %0, %%cr3" : : "r"(pml4));
     
+    
 
     kernel_entry(bootinfo);
 
@@ -298,15 +300,15 @@ void shared_main()
     return;
 
     fuxk:
-    ST->ConOut->OutputString(ST->ConOut, L"Failed to load/parse kernel!\r\n");
+    log_error(L"Failed to load/parse kernel!\r\n");
     return;
 
     fuxk2:
-    ST->ConOut->OutputString(ST->ConOut, L"Failed to exit boot services!\r\n");
+    log_error(L"Failed to exit boot services!\r\n");
     return;
 
     gigafuxk:
-    ST->ConOut->OutputString(ST->ConOut, L"Failed to load/parse config!\r\n");
+    log_error( L"Failed to load/parse config!\r\n");
     return;
 }
 int shared_end = 0;

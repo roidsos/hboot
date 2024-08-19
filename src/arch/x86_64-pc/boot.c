@@ -1,6 +1,7 @@
 #include <core/core.h>
 #include <core/libc/file.h>
 #include <efi/efi.h>
+#include <core/log.h>
 
 EFI_HANDLE IH;
 EFI_SYSTEM_TABLE *ST;
@@ -13,14 +14,16 @@ EFI_STATUS boot_entry(EFI_HANDLE _ih, EFI_SYSTEM_TABLE *_st)
     ST = _st;
 
     if(file_init() != HB_SUCCESS){
-        _st->ConOut->OutputString(_st->ConOut, L"Failed to init the file system!\r\n");
+        log_error(L"Failed to load file system! Reboot system!\r\n");
         for (;;)
             ;
     }
 
     _st->ConOut->ClearScreen(_st->ConOut);
 
-    _st->ConOut->OutputString(_st->ConOut, L"Booting RoidsOS...\r\n");
+    log_info(L"Booting Shared Entrypoint...\r\n");
+
+    log_error(L"test error log!\r\n");
 
     shared_main();
 
