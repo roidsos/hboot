@@ -1,5 +1,7 @@
 #include <core/core.h>
 #include <core/libc/file.h>
+#include <efi/efi.h>
+
 EFI_HANDLE IH;
 EFI_SYSTEM_TABLE *ST;
 
@@ -15,6 +17,8 @@ EFI_STATUS boot_entry(EFI_HANDLE _ih, EFI_SYSTEM_TABLE *_st)
         for (;;)
             ;
     }
+
+    _st->ConOut->ClearScreen(_st->ConOut);
 
     _st->ConOut->OutputString(_st->ConOut, L"Booting RoidsOS...\r\n");
 

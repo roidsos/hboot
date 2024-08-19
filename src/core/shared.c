@@ -9,6 +9,7 @@
 #include <core/libc/malloc.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <efi/efi_types.h>
 
 char* kernel_path = NULL;
 char* kernel_cmdline = NULL;
@@ -85,7 +86,6 @@ HB_STATUS load_config() {
     cfg_get_key(buffer, "ramfs", &ramfs_path);
     if (ramfs_path != NULL) {
         fix_path(ramfs_path);
-        // no problem if the ramfs is not found
     }
 
     free(buffer);
@@ -125,9 +125,6 @@ void shared_main()
 
     mbstowcs(wide, kernel_path, 1024);
 
-    ST->ConOut->OutputString(ST->ConOut, L"Kernel path:\r\n");
-    ST->ConOut->OutputString(ST->ConOut, wide);
-    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
 
     HB_FILE *kernel = file_open(wide, EFI_FILE_MODE_READ);
     if(kernel == NULL) {
@@ -160,17 +157,17 @@ void shared_main()
         if(ramfs == NULL) {
             goto fuxk2;
         }
-        bootinfo->ramfs_size = file_size(ramfs);
-        s = ST->BootServices->AllocatePool(EfiLoaderData, bootinfo->ramfs_size, (void**)bootinfo->ramfs);
+        bootinfo->ramfs.ramfs_size = file_size(ramfs);
+        s = ST->BootServices->AllocatePool(EfiLoaderData, bootinfo->ramfs.ramfs_size, (void**)bootinfo->ramfs.ramfs_addr);
         if(s != EFI_SUCCESS) {
             goto fuxk2;
         }
-        file_read(ramfs, (void*)bootinfo->ramfs, bootinfo->ramfs_size);
+        file_read(ramfs, (void*)bootinfo->ramfs.ramfs_addr, bootinfo->ramfs.ramfs_size);
         file_close(ramfs);
 
     } else {
-        bootinfo->ramfs = 0;
-        bootinfo->ramfs_size = 0;
+        bootinfo->ramfs.ramfs_addr = 0;
+        bootinfo->ramfs.ramfs_addr = 0;
     }
 
     EFI_MEMORY_DESCRIPTOR* map = NULL;
@@ -227,8 +224,8 @@ void shared_main()
         ST->ConOut->OutputString(ST->ConOut, err);
         goto retry;
     }
-    bootinfo->memmap_size = map_size;
-    bootinfo->memmap = (uintptr_t)map;
+    bootinfo->memmap.memmap_size = map_size;
+    bootinfo->memmap.memmap = (uintptr_t)map;
 
     uintptr_t *pml4 = NULL;
     ST->BootServices->AllocatePages(AllocateAddress, EfiLoaderData, 1, (void*)&pml4);
@@ -257,10 +254,18 @@ void shared_main()
             memcpy((void*)(phdr->p_paddr), (void*)(phdr->p_offset + (uintptr_t)kernelbuf), phdr->p_filesz);
         }
     }
+
+    ST->ConOut->OutputString(ST->ConOut, L"Kernel path: ");
+    ST->ConOut->OutputString(ST->ConOut, wide);
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
+
     typedef int (*entry_t)(boot_info* bootinfo);
     entry_t kernel_entry = (entry_t)h->e_entry;
     __asm__ volatile("mov %0, %%cr3" : : "r"(pml4));
+    
+
     kernel_entry(bootinfo);
+
 
     //HACK: port e9
     asm volatile("outb %%al, %1" : : "a" ('E'), "Nd" (0xe9) : "memory");

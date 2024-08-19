@@ -9,14 +9,22 @@
 #define HB_PROTOCOL_MAGIC   0xdeadbeef
 
 typedef struct {
+    size_t memmap_size;
+    uintptr_t memmap;
+} __attribute__((packed)) memmap_t;
+
+typedef struct {
+    size_t ramfs_size;
+    uintptr_t ramfs_addr;
+} __attribute__((packed)) ramfs_t;
+
+typedef struct {
     uint32_t magic;
     uint32_t version;
 
-    size_t memmap_size;
-    uintptr_t memmap;
+    memmap_t memmap;
 
-    size_t ramfs_size;
-    uintptr_t ramfs;
+    ramfs_t ramfs;
 
 } __attribute__((packed)) boot_info;
 
