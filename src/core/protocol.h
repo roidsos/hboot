@@ -19,7 +19,7 @@ typedef struct {
 } __attribute__((packed)) ramfs_t;
 
 typedef struct {
-    void *base;               // 8 bytes
+    uint64_t base;            // 4 bytes
     uint32_t width;           // 4 bytes
     uint32_t height;          // 4 bytes
     uint32_t pitch;           // 4 bytes
@@ -30,7 +30,8 @@ typedef struct {
     uint8_t green_mask_shift; // 1 byte
     uint8_t blue_mask_size;   // 1 byte
     uint8_t blue_mask_shift;  // 1 byte
-    uint8_t padding[3];       // 3 bytes of padding to make the total size 32 bytes
+    uint8_t reserved[8];      // 8 bytes
+    // Total: 32 bytes
 } __attribute__((packed)) framebuffer_t;
 
 typedef struct {

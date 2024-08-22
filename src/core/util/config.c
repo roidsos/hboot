@@ -15,6 +15,7 @@
 extern char* kernel_path;
 extern char* kernel_cmdline;
 extern char* ramfs_path;
+extern char* graphics_mode;
 
 //deja vu
 void __chkstk(){}
@@ -87,6 +88,11 @@ HB_STATUS load_config() {
     cfg_get_key(buffer, "ramfs", &ramfs_path);
     if (ramfs_path != NULL) {
         fix_path(ramfs_path);
+    }
+
+    cfg_get_key(buffer, "graphics_mode", &graphics_mode);
+    if (graphics_mode == NULL) {
+        graphics_mode = "0";
     }
 
     free(buffer);

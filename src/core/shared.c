@@ -12,10 +12,12 @@
 #include <efi/efi_types.h>
 #include "log.h"
 #include <core/util/config.h>
+#include <core/util/int.h>
 
 char* kernel_path = NULL;
 char* kernel_cmdline = NULL;
 char* ramfs_path = NULL;
+char *graphics_mode = NULL;
 
 extern int shared_end;
 void shared_main()
@@ -23,34 +25,64 @@ void shared_main()
     EFI_STATUS s;
 
     if(load_config() != HB_SUCCESS) {
-        goto gigafuxk;
+        log_error(L"Failed to load config");
+        return;
     }
 
     CHAR16 wide[1024];
 
     mbstowcs(wide, kernel_path, 1024);
 
+    CHAR16 kernel_path_wide[1024];
+    mbstowcs(kernel_path_wide, kernel_path, 1024);
+
+    ST->ConOut->OutputString(ST->ConOut, L"Loading kernel: ");
+    ST->ConOut->OutputString(ST->ConOut, kernel_path_wide);
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
+
+    CHAR16 cmdline[1024];
+    mbstowcs(cmdline, kernel_cmdline, 1024);
+    ST->ConOut->OutputString(ST->ConOut, L"Kernel command line: ");
+    ST->ConOut->OutputString(ST->ConOut, cmdline);
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
+
+    CHAR16 wide_graphics_mode[1024];
+    mbstowcs(wide_graphics_mode, graphics_mode, 1024);
+    ST->ConOut->OutputString(ST->ConOut, L"Graphics mode: ");
+    ST->ConOut->OutputString(ST->ConOut, wide_graphics_mode);
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
+
+    CHAR16 wide_ramfs_path[1024];
+    mbstowcs(wide_ramfs_path, ramfs_path, 1024);
+    ST->ConOut->OutputString(ST->ConOut, L"Ramfs path: ");
+    ST->ConOut->OutputString(ST->ConOut, wide_ramfs_path);
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
+
 
     HB_FILE *kernel = file_open(wide, EFI_FILE_MODE_READ);
     if(kernel == NULL) {
-        goto fuxk;
+        log_error(L"Failed to open kernel file");
+        return;
     }
     EFI_UINTN size = file_size(kernel);
     void* kernelbuf = malloc(size);
     if(file_read(kernel, kernelbuf, size) != HB_SUCCESS) {
-        goto fuxk;
+        log_error(L"Failed to read kernel file");
+        return;
     }
     file_close(kernel);
 
     Elf64_Ehdr* h = (Elf64_Ehdr*)kernelbuf;
     if(!validate_elf(kernelbuf)) {
-        goto fuxk;
+        log_error(L"Invalid kernel file");
+        return;
     }
 
     boot_info* bootinfo;
     s = ST->BootServices->AllocatePool(EfiLoaderData, sizeof(boot_info), (void**)&bootinfo);
     if(s != EFI_SUCCESS) {
-        goto fuxk2;
+        log_error(L"Failed to allocate bootinfo");
+        return;
     }
     bootinfo->magic = HB_PROTOCOL_MAGIC;
     bootinfo->version = HB_PROTOCOL_VERSION;
@@ -60,12 +92,14 @@ void shared_main()
         mbstowcs(ramfs_wide, ramfs_path, 1024);
         HB_FILE *ramfs = file_open(ramfs_wide, EFI_FILE_MODE_READ);
         if(ramfs == NULL) {
-            goto fuxk2;
+            log_error(L"Failed to open ramfs file");
+            return;
         }
         bootinfo->ramfs.ramfs_size = file_size(ramfs);
         s = ST->BootServices->AllocatePool(EfiLoaderData, bootinfo->ramfs.ramfs_size, (void**)bootinfo->ramfs.ramfs_addr);
         if(s != EFI_SUCCESS) {
-            goto fuxk2;
+            log_error(L"Failed to allocate ramfs");
+            return;
         }
         file_read(ramfs, (void*)bootinfo->ramfs.ramfs_addr, bootinfo->ramfs.ramfs_size);
         file_close(ramfs);
@@ -82,6 +116,62 @@ void shared_main()
     EFI_UINTN   map_desc_size = 0;
     EFI_UINT32  map_desc_version = 0;
 
+    framebuffer_t fb;
+
+    EFI_STATUS fb_status;
+    EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+
+    EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
+    EFI_UINTN info_size;
+
+    fb_status = ST->BootServices->LocateProtocol(&gop_guid, NULL, (void**)&gop);
+    if(EFI_ERROR(fb_status)) {
+        log_error(L"Failed to locate GOP");
+    }
+
+    fb_status = gop->QueryMode(gop, gop->Mode == NULL ? 0 : gop->Mode->Mode, &info_size, &info);
+    if(fb_status == (EFI_UINTN)EFI_NOT_STARTED) {
+        log_error(L"GOP not started");
+    }
+
+    if (EFI_ERROR(fb_status)) {
+        log_error(L"Failed to query GOP mode");
+    }
+
+    switch(gop->Mode->Info->PixelFormat) {
+        case PixelBlueGreenRedReserved8BitPerColor:
+            fb.bpp = 32;
+            fb.red_mask_size = 8;
+            fb.red_mask_shift = 16;
+            fb.green_mask_size = 8;
+            fb.green_mask_shift = 8;
+            fb.blue_mask_size = 8;
+            fb.blue_mask_shift = 0;
+            break;
+        case PixelRedGreenBlueReserved8BitPerColor:
+            fb.bpp = 32;
+            fb.red_mask_size = 8;
+            fb.red_mask_shift = 0;
+            fb.green_mask_size = 8;
+            fb.green_mask_shift = 8;
+            fb.blue_mask_size = 8;
+            fb.blue_mask_shift = 16;
+            break;
+        default:
+            break;
+    }
+
+    fb.base = gop->Mode->FrameBufferBase;
+    fb.width = gop->Mode->Info->HorizontalResolution;
+    fb.height = gop->Mode->Info->VerticalResolution;
+    fb.pitch = gop->Mode->Info->PixelsPerScanLine * 4;
+    for (int i = 0; i < 8; i++) {
+        fb.reserved[i] = 0;
+    }
+
+    bootinfo->framebuffer = fb;
+
     ST->BootServices->GetMemoryMap(&map_size, tmpmap, &map_key, &map_desc_size, &map_desc_version);
 
     map_size += 4096;
@@ -95,7 +185,7 @@ void shared_main()
         err[3] = '\n';
         err[4] = '\0';
         ST->ConOut->OutputString(ST->ConOut, err);
-        goto fuxk2;
+        log_error(L"Failed to allocate memory map");
     }
 
     retry:
@@ -104,7 +194,7 @@ void shared_main()
     if(s != EFI_SUCCESS) {
         retries--;
         if(retries == 0) 
-            goto fuxk2; 
+            log_error(L"Failed to get memory map"); 
         CHAR16 err[5];
         err[0] = '0' + s;
         err[1] = 'c';
@@ -119,7 +209,7 @@ void shared_main()
     if(s != EFI_SUCCESS) {
         retries--;
         if(retries == 0)
-            goto fuxk2;
+            log_error(L"Failed to exit boot services");
         CHAR16 err[5];
         err[0] = '0' + s;
         err[1] = 'd';
@@ -160,15 +250,44 @@ void shared_main()
         }
     }
 
-    ST->ConOut->OutputString(ST->ConOut, L"Kernel path: ");
-    ST->ConOut->OutputString(ST->ConOut, wide);
-    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
-
     typedef int (*entry_t)(boot_info* bootinfo);
     entry_t kernel_entry = (entry_t)h->e_entry;
     __asm__ volatile("mov %0, %%cr3" : : "r"(pml4));
     
-    
+    int graphics_mode_int = stringToInt(graphics_mode);
+
+    switch (graphics_mode_int) {
+        case 0: 
+            gop->SetMode(gop, 0);
+            break;
+        case 1:
+            gop->SetMode(gop, 1);
+            break;
+        case 2:
+            gop->SetMode(gop, 2);
+            break;
+        case 3:
+            gop->SetMode(gop, 3);
+            break;
+        case 4:
+            gop->SetMode(gop, 4);
+            break;
+        case 5:
+            gop->SetMode(gop, 5);
+            break;
+        case 6:
+            gop->SetMode(gop, 6);
+            break;
+        case 7:
+            gop->SetMode(gop, 7);
+            break;
+        case 8: 
+            gop->SetMode(gop, 8);
+            break;
+        default:
+            gop->SetMode(gop, 1);
+            break;
+    }
 
     kernel_entry(bootinfo);
 
@@ -201,18 +320,6 @@ void shared_main()
     asm volatile("outb %%al, %1" : : "a" ('!'), "Nd" (0xe9) : "memory");
     asm volatile("outb %%al, %1" : : "a" ('\r'), "Nd" (0xe9) : "memory");
     asm volatile("outb %%al, %1" : : "a" ('\n'), "Nd" (0xe9) : "memory");
-    return;
-
-    fuxk:
-    log_error(L"Failed to load/parse kernel!\r\n");
-    return;
-
-    fuxk2:
-    log_error(L"Failed to exit boot services!\r\n");
-    return;
-
-    gigafuxk:
-    log_error( L"Failed to load/parse config!\r\n");
     return;
 }
 int shared_end = 0;
