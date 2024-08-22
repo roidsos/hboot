@@ -2,6 +2,8 @@
 #include "krnlldr.h"
 #include "elf.h"
 
+// test
+
 int validate_elf(void* elf) { 
     Elf64_Ehdr* h = (Elf64_Ehdr*)elf;
 
